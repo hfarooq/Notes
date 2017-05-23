@@ -9,7 +9,7 @@ home:
 https://bioinformaticsdotca/BiCG_2017/tree/c1a499370d05dccf91ab61207b711295e0f31c08
 ---
 
-# Lab Module 5 - Somatic Muations and Annotation
+# Lab Module 5 - Somatic Mutations and Annotation
 
 This lab is designed to provide an introduction into Somatic Nucleotide Variation detection using two common programs: [Strelka](https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/bts271) and [MuTect](http://www.nature.com/nbt/journal/v31/n3/full/nbt.2514.html)
 
