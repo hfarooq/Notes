@@ -40,12 +40,9 @@ SNPEFF_DIR=/usr/local/snpEff
 
 ## Linking the Sequencing and Referencing Data
 
-For this lab module, we'll be using exome data on the HCC1395 breast cancer cell line. The tumour and normal bams have already been processed and placed on the server. So we'll create a soft link to the directory that it's stored:
+For this lab module, we'll be using exome data on the HCC1395 breast cancer cell line. The tumour and normal bams have already been processed and placed on the server. So we'll create a soft link to the directory that it's stored. We'll also create a soft link to where the reference genome is stored:
 ```
 ln -s /home/ubuntu/CourseData/CG_data/Module5/HCC1395
-```
-For mutation calling we also need a reference genome, and so we're going to make a link to that folder as well:
-```
 ln -s /home/ubuntu/CourseData/CG_data/Module5/ref_data
 ```
 For this lab we're going to limit our analysis to just the 7MB and 8MB region of chromosome 17 to ensure processing occurs quickly. The files we'll be focusing on can be viewed using the following command:
@@ -53,10 +50,10 @@ For this lab we're going to limit our analysis to just the 7MB and 8MB region of
 ls HCC1395/HCC1395_exome*ordered.17*
 ```
 You should see the files:
-* HCC1395_exome_normal_ordered.17.7MB-8MB.bam
-* HCC1395_exome_normal_ordered.17.7MB-8MB.bam.bai
-* HCC1395_exome_tumour_ordered.17.7MB-8MB.bam
-* HCC1395_exome_tumour_ordered.17.7MB-8MB.bam.bai
+* HCC1395_exome_normal.17.7MB-8MB.bam
+* HCC1395_exome_normal.17.7MB-8MB.bam.bai
+* HCC1395_exome_tumour.17.7MB-8MB.bam
+* HCC1395_exome_tumour.17.7MB-8MB.bam.bai
 
 Let's take a bit of time to look into the bam files we have, starting with the header. The header contains information about the reference genome, commands used to generate the file, and on read groups (information about sample/flow cell/lane etc.)
 ```
@@ -95,8 +92,9 @@ mkdir results; mkdir results/mutect;
 /usr/local/java6/bin/java -Xmx4g -jar $MUTECT_DIR/muTect-1.1.4.jar \
 --analysis_type MuTect --reference_sequence ref_data/Homo_sapiens.GRCh37.75.dna.primary_assembly.reordered.fa \
 --dbsnp $MUTECT_DIR/dbsnp_132_b37.leftAligned.vcf --cosmic $MUTECT_DIR/b37_cosmic_v54_120711.vcf \
---intervals 17:7000000-8000000 --input_file:normal HCC1395/HCC1395_exome_normal_ordered.17.7MB-8MB.bam \
---input_file:tumor HCC1395/HCC1395_exome_tumour_ordered.17.7MB-8MB.bam --vcf results/mutect/mutect.call_stats.vcf
+--intervals 17:7000000-8000000 --input_file:normal HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam \
+--input_file:tumor HCC1395/HCC1395_exome_tumour.17.7MB-8MB.bam --vcf HCC1395.17.7MB-8MB_summary.vcf \
+--out HCC1395.17.7MB-8MB_stats.out
 ```
 
 The `-Xmx4g` option allocates 4 GB of RAM for MuTect to run it's analysis. MuTect will output a vcf file with the calls.
@@ -105,6 +103,13 @@ The calls file contains information about the each SNV including information suc
 
 ```
 less -S results/mutect.call_stats.vcf
+```
+
+Now to subset for just the SNV's that have passed quality filtering, we use the following commands:
+
+```
+grep -v "REJECT" HCC1395.17.7MB-8MB_summary.vcf > HCC1395.17.7MB-8MB_passed.vcf
+grep -v "REJECT" HCC1395.17.7MB-8MB_stats.out > HCC1395.17.7MB-8MB_passed.stats.out
 ```
 
 
@@ -141,8 +146,8 @@ A Strelka analysis is performed in 2 steps.  In the first step we provide Strelk
 
 ```
 configureStrelkaWorkflow.pl \
-    --tumor HCC1395/HCC1395_exome_tumour_ordered.17.7MB-8MB.bam \
-    --normal HCC1395/HCC1395_exome_normal_ordered.17.7MB-8MB.bam \
+    --tumor HCC1395/HCC1395_exome_tumour.17.7MB-8MB.bam \
+    --normal HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam \
     --ref ref_data/Homo_sapiens.GRCh37.75.dna.primary_assembly.reordered.fa \
     --config config/strelka_config_bwa_exome.ini \
     --output-dir results/strelka/
@@ -176,13 +181,13 @@ The VCF format is sometimes not useful for visualization and data exploration pu
 For example, to convert the Strelka VCF file into a tabular format:
 
 ```
-java -jar $SNPEFF_DIR/SnpSift.jar extractFields -e "."  results/strelka/results/passed.somatic.snvs.vcf CHROM POS ID REF ALT QUAL FILTER QSS TQSS NT QSS_NT TQSS_NT SGT SOMATIC GEN[0].DP GEN[1].DP GEN[0].FDP GEN[1].FDP GEN[0].SDP GEN[1].SDP GEN[0].SUBDP GEN[1].SUBDP GEN[0].AU GEN[1].AU GEN[0].CU GEN[1].CU GEN[0].GU GEN[1].GU GEN[0].TU GEN[1].TU > results/strelka/results/passed.somatic.snvs.txt 
+java -jar $SNPEFF_DIR/SnpSift.jar extractFields -e "."  results/strelka/results/passed.somatic.snvs.vcf CHROM POS REF ALT QSS_NT GEN[0].DP GEN[1].DP GEN[0].AU GEN[1].AU GEN[0].CU GEN[1].CU GEN[0].GU GEN[1].GU GEN[0].TU GEN[1].TU > results/strelka/results/passed.somatic.snvs.txt 
 ```
 
 To convert the MuTect VCF file into a tabular format:
 
 ```
-java -jar $SNPEFF_DIR/SnpSift.jar extractFields -e "." results/mutect/mutect.call_stats.vcf CHROM POS ID REF ALT QUAL FILTER  > results/mutect/mutect.call_stats.txt
+java -jar $SNPEFF_DIR/SnpSift.jar extractFields -e "." results/mutect/mutect.call_stats.vcf CHROM POS REF ALT GEN[0].FA GEN[1].FA > results/mutect/mutect.call_stats.txt
 ```
 
 The -e parameter specifies how to represent empty fields. In this case, the "." character is placed for any empty fields. This facilitates loading and completeness of data. For more details on the extractField() function see the [SnpSift documentation](http://snpeff.sourceforge.net/SnpSift.html#Extract).
