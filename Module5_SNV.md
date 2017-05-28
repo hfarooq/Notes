@@ -57,12 +57,12 @@ You should see the files:
 
 Let's take a bit of time to look into the bam files we have, starting with the header. The header contains information about the reference genome, commands used to generate the file, and on read groups (information about sample/flow cell/lane etc.)
 ```
-samtools view -H HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam | less -S
+samtools view -H HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam | less -s
 ```
 
 The main contents of the file contain the one aligned read (read name, chromosome, position etc.) per line:
 ```
-samtools view HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam | less -S
+samtools view HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam | less -s
 ```
 
 In order to determine statistics about the bam file, we can use samtools' built in tool:
@@ -93,8 +93,8 @@ mkdir results; mkdir results/mutect;
 --analysis_type MuTect --reference_sequence ref_data/Homo_sapiens.GRCh37.75.dna.primary_assembly.reordered.fa \
 --dbsnp $MUTECT_DIR/dbsnp_132_b37.leftAligned.vcf --cosmic $MUTECT_DIR/b37_cosmic_v54_120711.vcf \
 --intervals 17:7000000-8000000 --input_file:normal HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam \
---input_file:tumor HCC1395/HCC1395_exome_tumour.17.7MB-8MB.bam --vcf HCC1395.17.7MB-8MB_summary.vcf \
---out HCC1395.17.7MB-8MB_stats.out
+--input_file:tumor HCC1395/HCC1395_exome_tumour.17.7MB-8MB.bam --vcf results/mutect/HCC1395.17.7MB-8MB_summary.vcf \
+--out results/mutect/HCC1395.17.7MB-8MB_stats.out
 ```
 
 The `-Xmx4g` option allocates 4 GB of RAM for MuTect to run it's analysis. MuTect will output a vcf file with the calls.
@@ -102,14 +102,14 @@ The `-Xmx4g` option allocates 4 GB of RAM for MuTect to run it's analysis. MuTec
 The calls file contains information about the each SNV including information such as the reference allele, alternate allele and whether the SNV should be kept based on MuTect's quality filtering.
 
 ```
-less -S HCC1395.17.7MB-8MB_summary.vcf
+less -s results/mutect/HCC1395.17.7MB-8MB_summary.vcf
 ```
 
 Now to subset for just the SNV's that have passed quality filtering, we use the following commands:
 
 ```
-grep -v "REJECT" HCC1395.17.7MB-8MB_summary.vcf > HCC1395.17.7MB-8MB_passed.vcf
-grep -v "REJECT" HCC1395.17.7MB-8MB_stats.out > HCC1395.17.7MB-8MB_passed.stats.out
+grep -v "REJECT" results/mutect/HCC1395.17.7MB-8MB_summary.vcf > results/mutect/HCC1395.17.7MB-8MB_passed.vcf
+grep -v "REJECT" results/mutect/HCC1395.17.7MB-8MB_stats.out > results/mutect/HCC1395.17.7MB-8MB_passed.stats.out
 ```
 
 
