@@ -47,7 +47,7 @@ ln -s /home/ubuntu/CourseData/CG_data/Module5/ref_data
 ```
 For this lab we're going to limit our analysis to just the 7MB and 8MB region of chromosome 17 to ensure processing occurs quickly. The files we'll be focusing on can be viewed using the following command:
 ```
-ls HCC1395/HCC1395_exome*ordered.17*
+ls HCC1395/HCC1395_exome*.17*
 ```
 You should see the files:
 * HCC1395_exome_normal.17.7MB-8MB.bam
@@ -57,17 +57,17 @@ You should see the files:
 
 Let's take a bit of time to look into the bam files we have, starting with the header. The header contains information about the reference genome, commands used to generate the file, and on read groups (information about sample/flow cell/lane etc.)
 ```
-samtools view -H HCC1395/HCC1395_exome_normal_ordered.17.7MB-8MB.bam | less -S
+samtools view -H HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam | less -S
 ```
 
 The main contents of the file contain the one aligned read (read name, chromosome, position etc.) per line:
 ```
-samtools view HCC1395/HCC1395_exome_normal_ordered.17.7MB-8MB.bam | less -S
+samtools view HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam | less -S
 ```
 
 In order to determine statistics about the bam file, we can use samtools' built in tool:
 ```
-samtools flagstat HCC1395/HCC1395_exome_normal_ordered.17.7MB-8MB.bam
+samtools flagstat HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam
 ```
 
 # Predicting SNVs
@@ -102,7 +102,7 @@ The `-Xmx4g` option allocates 4 GB of RAM for MuTect to run it's analysis. MuTec
 The calls file contains information about the each SNV including information such as the reference allele, alternate allele and whether the SNV should be kept based on MuTect's quality filtering.
 
 ```
-less -S results/mutect.call_stats.vcf
+less -S HCC1395.17.7MB-8MB_summary.vcf
 ```
 
 Now to subset for just the SNV's that have passed quality filtering, we use the following commands:
