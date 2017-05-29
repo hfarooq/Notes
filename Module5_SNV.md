@@ -6,7 +6,7 @@ header1: Bioinformatics for Cancer Genomics 2017
 header2: Lab Module 5 - Somatic Mutations and Annotation
 image: /site_images/CBW-CSHL-graphic-square.png
 home:
-https://bioinformaticsdotca/BiCG_2017/tree/c1a499370d05dccf91ab61207b711295e0f31c08
+https://bioinformaticsdotca/BiCG_2017/tree/master/module5
 ---
 
 # Lab Module 5 - Somatic Mutations and Annotation
@@ -40,10 +40,11 @@ SNPEFF_DIR=/usr/local/snpEff
 
 ## Linking the Sequencing and Referencing Data
 
-For this lab module, we'll be using exome data on the HCC1395 breast cancer cell line. The tumour and normal bams have already been processed and placed on the server. So we'll create a soft link to the directory that it's stored. We'll also create a soft link to where the reference genome is stored:
+For this lab module, we'll be using exome data on the HCC1395 breast cancer cell line. The tumour and normal bams have already been processed and placed on the server. So we'll create a soft link to the directory that it's stored. We'll also create a soft link to where the reference genome is stored, as well as a folder we'll use later on in the lab:
 ```
 ln -s /home/ubuntu/CourseData/CG_data/Module5/HCC1395
 ln -s /home/ubuntu/CourseData/CG_data/Module5/ref_data
+ln -s /home/ubuntu/CourseData/CG_data/Module5/snv_analysis
 ```
 For this lab we're going to limit our analysis to just the 7MB and 8MB region of chromosome 17 to ensure processing occurs quickly. The files we'll be focusing on can be viewed using the following command:
 ```
@@ -74,9 +75,8 @@ samtools flagstat HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam
 
 ## MuTect
 
-* Insert Mutect Introduction *
+In order to run MuTect, we simply run the java application of the program in one go. For our run of MuTect run, we're going to use two files to help filter out noise and focus on damaging mutations.: common SNV's present from in the general population as provided by dbSNP, and potentially damaging SNV's as documented in COSMIC. These files are stored in the same path as our MUTECT_DIR variable.
 
-In order to run MuTect, we simply run the java application of the program in one go. For MuTect to run, we need to have common SNV's present from dbsnp and cosmic to help filter out noise and focus on damaging mutations. These files are stored in the same path as our MUTECT_DIR variable.
 Looking at the dbsnp file:
 ```
 less $MUTECT_DIR/dbsnp_132_b37.leftAligned.vcf
@@ -115,20 +115,14 @@ grep -v "REJECT" results/mutect/HCC1395.17.7MB-8MB_stats.out > results/mutect/HC
 
 ## Strelka
 
-We will first call mutations using Strelka. Create a local copy of the Strelka config file.  Strelka provides aligner specific config files for bwa, eland, and isaac.  Each file contains default configuration parameters that work well with the aligner.  The bam files we are working with were created using bwa, so we select that config file and make a local copy to make changes.
+Next, we'll call mutations using Strelka. Strelka provides aligner specific config files for bwa, eland, and isaac, each with preconfigured default parameters that work well with the aligner used. Since the bam file we're working with were processed using bwa, we'll make a local copy of that file:
 
 ```
 mkdir config
 cp /usr/local/etc/strelka_config_bwa_default.ini config/strelka_config_bwa.ini
 ```
 
-Since our data is exome and so the coverage of the file is different, we need to change the `isSkipDepthFilters` parameter in the strelka_config_bwa.ini file. We'll first create a new config file for exome analysis:
-
-```
-cp config/strelka_config_bwa.ini config/strelka_config_bwa_exome.ini
-```
-
-Now let's edit the `config/strelka_config_bwa_exome.ini` and change the `isSkipDepthFilters = 0` to `isSkipDepthFilters = 1`.  We will use this using the vim editor:
+Our data is exome and so the coverage of the file is different, we need to change the `isSkipDepthFilters` parameter in the `strelka_config_bwa.ini` file. The default setting of `isSkipDepthFilters = 0` must simply be changed to `isSkipDepthFilters = 1`, and we'll accomplish this using the vim editor:
 
 ```
 vim config/strelka_config_bwa_exome.ini
@@ -149,11 +143,11 @@ configureStrelkaWorkflow.pl \
     --tumor HCC1395/HCC1395_exome_tumour.17.7MB-8MB.bam \
     --normal HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam \
     --ref ref_data/Homo_sapiens.GRCh37.75.dna.primary_assembly.reordered.fa \
-    --config config/strelka_config_bwa_exome.ini \
+    --config config/strelka_config_bwa.ini \
     --output-dir results/strelka/
 ```
 
-The output directory will contain a _makefile_ that can be used with the tool _make_.  One benefit of the makefile style workflow is that it can be easily parallelized using _qmake_ on a grid engine cluster.  
+The output directory will contain a _makefile_ that can be used with the tool _make_.
 
 To run the Strelka analysis, use make and specify the directory constructed by `configureStrelkaWorkflow.pl` with make's `'-C'` option.
 
@@ -173,6 +167,10 @@ The Strelka results are in VCF format, with additional fields explained on the [
 less -S results/strelka/results/passed.somatic.snvs.vcf
 less -S results/strelka/results/passed.somatic.indels.vcf
 ```
+
+## Annotating our mutations
+
+Now that we have our 
 
 ## Converting the VCF format into a tabular format
 
@@ -218,6 +216,6 @@ Manually inspecting these predicted SNVs in IGV is a good way to verify the pred
 
 While IGV is good for visualizing individual mutations, looking at more global characteristics would require loading the data into an analysis language like R:
 
-We will use exome-wide SNV predictions for Strelka for these analyses. These processed tabular text files along with the `analyzeSNVResults.Rmd` RMarkdown file that contains the R code for the analysis can downloaded as a package. 
+We will use exome-wide SNV predictions for MuTect for these analyses. These processed tabular text files along with the `snv_analysis.Rmd` RMarkdown file that contains the R code is available in our `snv_analysis` folder  
 
-Open the `analyzeSNVResults.Rmd` in RStudio now. 
+Open the `snv_analysis.Rmd` in RStudio now. 
