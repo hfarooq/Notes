@@ -173,28 +173,47 @@ less -S results/strelka/results/passed.somatic.indels.vcf
 
 Now that we have our list of mutations, we can annotate them with multiple layers of information, such as the gene name, the function of the location (intronic, exonic), whether the mutation belongs to dbSNP or the 1000 genome project, and multiple other layers. For this lab, we're going to annotate our variants with the following fields of information: Function, Gene Name, Cytoband, Exonic function of the SNV, 1000 genome membership, dbsnp membership.
 
-To do this, we use the following command for each of our vcf's:
+Let's place these results in a new folder within our results folder:
 
 ```
-table_annovar.pl results/strelka/results/passed.somatic.snvs.vcf $ANNOVAR_DIR/humandb/ -buildver hg19 -out strelka -remove -protocol refGene,cytoBand,genomicSuperDups,esp6500siv2_all,1000g2015aug_all,1000g2015aug_eur,exac03,avsnp147,dbnsfp30a -operation g,r,r,f,f,f,f,f,f -nastring . --vcfinput
-
-table_annovar.pl results/mutect/HCC1395.17.7MB-8MB_passed.vcf $ANNOVAR_DIR/humandb/ -buildver hg19 -out mutect -remove -protocol refGene,cytoBand,genomicSuperDups,esp6500siv2_all,1000g2015aug_all,1000g2015aug_eur,exac03,avsnp147,dbnsfp30a -operation g,r,r,f,f,f,f,f,f -nastring . --vcfinput
+mkdir results/annotated
 ```
 
-## Converting the VCF format into a tabular format
+To run Annovar on the MuTect output, we use the following command:
+
+```
+table_annovar.pl results/mutect/HCC1395.17.7MB-8MB_passed.vcf $ANNOVAR_DIR/humandb/ -buildver hg19 -out results/annotated/mutect -remove -protocol refGene,cytoBand,genomicSuperDups,esp6500siv2_all,1000g2015aug_all,1000g2015aug_eur,exac03,avsnp147,dbnsfp30a -operation g,r,r,f,f,f,f,f,f -nastring . --vcfinput
+```
+
+Unfortunately our strelka vcf doesn't have the mandatory info field for genotype _GT_ in the format that annovar requires, and so some manipulation of our strelka results are needed. Annovar requires a minimum of the chromosome, start position, end position, reference allele, and alternate allele.
+
+The following command will remove the header information, format the file as needed by annovar while retaining other information, and storing it into our new file _passed.somatic.snvs.txt_.
+
+```
+grep -v "##" results/strelka/results/passed.somatic.snvs.vcf | awk '{print $1"\t"$2"\t"$2"\t"$4"\t"$5"\t"$6"\t"$7"\t"$8"\t"$9"\t"$10"\t"$11}' > results/strelka/results/passed.somatic.snvs.txt'
+```
+
+Now we can annotate the Strelka output as we did before:
+
+```
+table_annovar.pl results/mutect/HCC1395.17.7MB-8MB_passed.vcf $ANNOVAR_DIR/humandb/ -buildver hg19 -out esults/annotated/strelka -remove -protocol refGene,cytoBand,genomicSuperDups,esp6500siv2_all,1000g2015aug_all,1000g2015aug_eur,exac03,avsnp147,dbnsfp30a -operation g,r,r,f,f,f,f,f,f -nastring . --vcfinput
+```
+
+
+## Parsing specific fields from our vcf file
 
 The VCF format is sometimes not useful for visualization and data exploration purposes which often requires the data to be in tabular format. We can convert from VCF format to tabular format using the extractField() function from SnpSift/SnpEff. Since each mutation caller has a different set of output values in the VCF file, the command needs be adjusted for each mutation caller depending on the fields present in the header. 
 
 For example, to convert the Strelka VCF file into a tabular format:
 
 ```
-java -jar $SNPEFF_DIR/SnpSift.jar extractFields -e "."  results/strelka/results/passed.somatic.snvs.vcf CHROM POS REF ALT Func.refGene Gene.refGene cytoBand ExonicFunc.refGene DB GEN[0].DP GEN[1].DP GEN[0].AU GEN[1].AU GEN[0].CU GENq[1].CU GEN[0].GU GEN[1].GU GEN[0].TU GEN[1].TU > results/strelka/results/passed.somatic.snvs.txt 
+java -jar $SNPEFF_DIR/SnpSift.jar extractFields -e "."  results/strelka/results/passed.somatic.snvs.vcf CHROM POS REF ALT GEN[0].DP GEN[1].DP GEN[0].AU GEN[1].AU GEN[0].CU GENq[1].CU GEN[0].GU GEN[1].GU GEN[0].TU GEN[1].TU > results/strelka/results/passed.somatic.snvs.txt 
 ```
 
 To convert the MuTect VCF file into a tabular format:
 
 ```
-java -jar $SNPEFF_DIR/SnpSift.jar extractFields -e "." results/mutect/HCC1395.17.7MB-8MB_passed.vcf CHROM POS REF ALT Func.refGene Gene.refGene cytoBand ExonicFunc.refGene GEN[0].FA GEN[1].FA > results/mutect/HCC1395.7MB-8MB_passed.txt
+java -jar $SNPEFF_DIR/SnpSift.jar extractFields -e "." results/mutect/HCC1395.17.7MB-8MB_passed.vcf CHROM POS REF ALT Func.refGene Gene.refGene cytoBand ExonicFunc.refGene GEN[0].FA GEN[1].FA > results/annotated/HCC1395.7MB-8MB_passed.txt
 ```
 
 The -e parameter specifies how to represent empty fields. In this case, the "." character is placed for any empty fields. This facilitates loading and completeness of data. For more details on the extractField() function see the [SnpSift documentation](http://snpeff.sourceforge.net/SnpSift.html#Extract).
@@ -223,8 +242,8 @@ Manually inspecting these predicted SNVs in IGV is a good way to verify the pred
 
 ### Exploration in R
 
-While IGV is good for visualizing individual mutations, looking at more global characteristics would require loading the data into an analysis language like R:
+While IGV is good for visualizing individual mutations, looking at more global characteristics would require loading the data into an analysis language like R.
 
-We will use exome-wide SNV predictions for MuTect for these analyses. These processed tabular text files along with the `snv_analysis.Rmd` RMarkdown file that contains the R code is available in our `snv_analysis` folder  
+We will use exome-wide SNV predictions for MuTect for these analyses; specifically, we're only going to look at the _stats.out_ output from MuTect that has been run on the whole exome file. The processed tabular text files along with the `snv_analysis.Rmd` RMarkdown file that contains the R code is available in our `snv_analysis` folder  
 
-Open the `snv_analysis.Rmd` in RStudio now. 
+Now let's launch our RStudio instance and open the file in `workspace/Module5/snv_analysis/snv_analysis.Rmd`
