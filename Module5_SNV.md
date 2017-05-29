@@ -125,7 +125,7 @@ cp /usr/local/etc/strelka_config_bwa_default.ini config/strelka_config_bwa.ini
 Our data is exome and so the coverage of the file is different, we need to change the `isSkipDepthFilters` parameter in the `strelka_config_bwa.ini` file. The default setting of `isSkipDepthFilters = 0` must simply be changed to `isSkipDepthFilters = 1`, and we'll accomplish this using the vim editor:
 
 ```
-vim config/strelka_config_bwa_exome.ini
+vim config/strelka_config_bwa.ini
 ```
 
 In order to quit the editor while saving changes, press **ESC**, following by **:x!** and pressing enter. The reason why we do this is described on the [Strelka FAQ page](https://sites.google.com/site/strelkasomaticvariantcaller/home/faq):
@@ -143,7 +143,7 @@ configureStrelkaWorkflow.pl \
     --tumor HCC1395/HCC1395_exome_tumour.17.7MB-8MB.bam \
     --normal HCC1395/HCC1395_exome_normal.17.7MB-8MB.bam \
     --ref ref_data/Homo_sapiens.GRCh37.75.dna.primary_assembly.reordered.fa \
-    --config config/strelka_config_bwa.ini \
+    --config config/strelka_config_bwa.ini
     --output-dir results/strelka/
 ```
 
