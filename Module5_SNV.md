@@ -11,7 +11,7 @@ https://bioinformaticsdotca/BiCG_2017/tree/master/module5
 
 # Lab Module 5 - Somatic Mutations and Annotation
 
-This lab is designed to provide an introduction into Somatic Nucleotide Variation detection using two common programs: [Strelka](https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/bts271) and [MuTect](http://www.nature.com/nbt/journal/v31/n3/full/nbt.2514.html). This lab will also go over simple manipulation of the files using [Annovar](http://annovar.openbioinformatics.org/en/latest/) and [SnpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
+This lab is designed to provide an introduction into Somatic Nucleotide Variation detection using two common programs: [Strelka](https://academic.oup.com/bioinformatics/article-lookup/doi/10.1093/bioinformatics/bts271) and [MuTect](http://www.nature.com/nbt/journal/v31/n3/full/nbt.2514.html). This lab will also go over simple annotation of the files using [Annovar](http://annovar.openbioinformatics.org/en/latest/) and manipulation of vcf files using [SnpEff](http://snpeff.sourceforge.net/SnpEff_manual.html)
 
 ## Setup
 
